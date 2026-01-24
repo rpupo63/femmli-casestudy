@@ -36,7 +36,9 @@ CREATE TABLE IF NOT EXISTS caffeine_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   log_date date NOT NULL,
-  entries jsonb DEFAULT '[]'::jsonb,
+  -- Encrypted in app layer before insert: format "iv:tag:ciphertext"
+  entries text DEFAULT '[]',
+  -- Encrypted in app layer before insert: format "iv:tag:ciphertext"
   notes text,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),

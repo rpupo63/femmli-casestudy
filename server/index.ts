@@ -36,19 +36,33 @@ const authenticateToken = (req: express.Request, res: express.Response, next: ex
 const processCaffeineLog = (row: any) => {
     if (!row) return null;
     let entries = [];
+    const parseIfJson = (value: any) => {
+        if (typeof value !== 'string') return null;
+        const trimmed = value.trim();
+        if (!trimmed || (trimmed[0] !== '[' && trimmed[0] !== '{')) {
+            return null;
+        }
+        try {
+            return JSON.parse(trimmed);
+        } catch {
+            return null;
+        }
+    };
     try {
         const decryptedEntries = decrypt(row.entries);
         // If decryption returns a string, try parsing it. 
         // If it was stored as JSONB previously, it might come out as stringified JSON.
         // If it was encrypted, decrypt returns stringified JSON.
         if (decryptedEntries) {
-            entries = JSON.parse(decryptedEntries);
+            const parsed = parseIfJson(decryptedEntries);
+            entries = parsed || [];
         } else if (row.entries && typeof row.entries === 'object') {
             // Fallback for unmigrated JSONB objects if any exist (though we changed type to text)
             entries = row.entries;
         } else if (row.entries) {
             // Fallback for unencrypted text
-            entries = JSON.parse(row.entries);
+            const parsed = parseIfJson(row.entries);
+            entries = parsed || [];
         }
     } catch (e) {
         console.warn('Failed to parse caffeine entries:', e);
