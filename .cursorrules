@@ -1,0 +1,77 @@
+# Rest App - Caffeine & Sleep Tracker
+
+## Project Overview
+A React + TypeScript app that helps users track caffeine consumption and correlate it with sleep quality. Uses a local PostgreSQL database with an Express backend.
+
+## Architecture
+
+### Frontend (`src/`)
+- **Framework:** React 18 + TypeScript + Vite
+- **Styling:** Tailwind CSS with custom `sand-*` color palette
+- **Routing:** React Router v6 with URL-based navigation
+- **State:** React Context for auth, local state for components
+
+### Backend (`server/`)
+- **Framework:** Express.js with TypeScript
+- **Database:** PostgreSQL 16 (via Docker)
+- **Auth:** JWT tokens stored in localStorage
+- **Port:** 3001
+
+### Key Directories
+```
+src/
+├── components/     # React components
+├── contexts/       # Auth context
+├── lib/           # API client, types, utilities
+server/
+├── index.ts       # Express routes
+├── db.ts          # PostgreSQL connection
+└── seed.ts        # Mock data generation
+```
+
+## Conventions
+
+### Component Patterns
+- Functional components with hooks
+- Named exports (not default)
+- Loading states handled inline
+- API calls in useEffect with error handling
+
+### Styling
+- Use Tailwind utilities, prefer `sand-*` palette
+- Glass effect: `glass` class (defined in index.css)
+- Responsive: Use `sm:` breakpoint for mobile adjustments
+- Shadows: `shadow-soft` or `shadow-warm`
+
+### API Calls
+- Use `src/lib/api.ts` functions (caffeineApi, sleepApi, authApi)
+- All protected routes need JWT in Authorization header
+- Handle loading/error states in components
+
+### Data Types
+- See `src/lib/supabase.ts` for TypeScript interfaces
+- Caffeine entries: `{ time, amount, type }`
+- Sleep logs: `{ sleep_score, total_sleep, deep_sleep, rem_sleep, sleep_efficiency }`
+
+## Important Notes
+
+1. **No direct DB access from frontend** - Always go through Express API
+2. **JWT tokens** - Only auth token in localStorage (appropriate use)
+3. **Input validation** - Client-side for UX, rely on server for security
+4. **Responsive design** - Test components at 320px viewport
+
+## Development Commands
+```bash
+npm run start        # Full setup: DB + seed + servers
+npm run dev:all      # Start both servers (if DB already running)
+npm run db:reset     # Reset database and reseed
+```
+
+## Testing Checklist
+- [ ] Routes work via direct URL navigation
+- [ ] Signup validates email/password
+- [ ] Modal scrollable on small screens
+- [ ] Caffeine time auto-selects based on hour
+- [ ] Sleep cards expand/collapse
+- [ ] Scatter plot dots are clickable
+- [ ] Progress tracker shows week-over-week changes

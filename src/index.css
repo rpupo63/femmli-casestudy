@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-sand-50: #faf9f7;
+    --color-sand-100: #f5f3ee;
+    --color-sand-200: #e8e4dc;
+    --color-sand-300: #d4cec1;
+    --color-sand-400: #b8ad99;
+    --color-sand-500: #9d8f77;
+    --color-sand-600: #7d6f5d;
+    --color-sand-700: #5f5446;
+    --color-sand-800: #433a30;
+    --color-sand-900: #2e261f;
+  }
+
+  html, body {
+    @apply bg-sand-50 text-sand-900;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  * {
+    @apply border-sand-200;
+  }
+}
+
+@layer utilities {
+  .bg-sand-50 {
+    background-color: var(--color-sand-50);
+  }
+  .bg-sand-100 {
+    background-color: var(--color-sand-100);
+  }
+  .bg-sand-200 {
+    background-color: var(--color-sand-200);
+  }
+  .bg-sand-300 {
+    background-color: var(--color-sand-300);
+  }
+  .text-sand-500 {
+    color: var(--color-sand-500);
+  }
+  .text-sand-600 {
+    color: var(--color-sand-600);
+  }
+  .text-sand-700 {
+    color: var(--color-sand-700);
+  }
+  .text-sand-800 {
+    color: var(--color-sand-800);
+  }
+  .text-sand-900 {
+    color: var(--color-sand-900);
+  }
+  .bg-sand-400 {
+    background-color: var(--color-sand-400);
+  }
+  .bg-sand-500 {
+    background-color: var(--color-sand-500);
+  }
+  .bg-sand-600 {
+    background-color: var(--color-sand-600);
+  }
+  .bg-sand-700 {
+    background-color: var(--color-sand-700);
+  }
+  .bg-sand-800 {
+    background-color: var(--color-sand-800);
+  }
+  .bg-sand-900 {
+    background-color: var(--color-sand-900);
+  }
+  .border-sand-200 {
+    border-color: var(--color-sand-200);
+  }
+  .border-sand-300 {
+    border-color: var(--color-sand-300);
+  }
+
+  .shadow-soft {
+    box-shadow: 0 8px 32px rgba(67, 58, 48, 0.08);
+  }
+
+  .shadow-warm {
+    box-shadow: 0 4px 16px rgba(125, 111, 93, 0.12);
+  }
+}
+
+@layer components {
+  .glass {
+    position: relative;
+    border: 1px solid rgba(212, 206, 193, 0.2);
+    isolation: isolate;
+  }
+
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(250, 249, 247, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+}
