@@ -184,24 +184,28 @@ frontend from Express in production.
 npm run build
 ```
 
+This command will:
+- Build the frontend (Vite)
+- Build the backend (TypeScript)
+- Run database migrations automatically
+
 ### Start Command
 ```bash
 npm run start
 ```
 
 ### Required Environment Variables
-- `DATABASE_URL` (Railway Postgres connection string)
-- `JWT_SECRET` (any long random string)
+- `DATABASE_URL` (Railway Postgres connection string — use variable reference `${{Postgres.DATABASE_URL}}`)
+- `JWT_SECRET` (any long random string, generate with `openssl rand -base64 32`)
 - `ENCRYPTION_KEY` (64-character hex string)
+- `NODE_ENV=production`
 
 ### Optional Environment Variables
-- `NODE_ENV=production` (recommended)
 - `VITE_API_URL` (only needed if you host API separately; otherwise leave unset)
 
 ### Database Setup on Railway
-Run the SQL in `supabase/migrations/local_setup.sql` against your Railway Postgres
-database to create tables and indexes. You can do this with a one-off `psql` command
-from your machine using the `DATABASE_URL` value.
+Database tables are created automatically during the build step via `npm run db:migrate`.
+The migrations use `CREATE TABLE IF NOT EXISTS` so they are safe to re-run on each deploy.
 
 ## 🌱 Seeding the Database
 
