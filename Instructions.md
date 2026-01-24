@@ -30,14 +30,14 @@ Complete these steps once to get the app ready to run.
   ```
 
 #### 4. Add Oura environment variables
-- Create a `.env` file in the project root with Oura variables so the integration works.
+- Create a `.env` file in the project root using the values from `.env.example` so the integration works.
 - See `how-to-connect-with-oura.md` for the required variables and how to obtain them.
 
 ## ⚡ Quick Start (After Initialization)
 
 1. **Start everything**:
    ```bash
-   npm start
+   npm run start:local
    ```
    This command will:
    - ✅ Start the database (PostgreSQL)
@@ -173,6 +173,35 @@ Go to `http://localhost:5173` in your browser and log in with:
 - Password: `test123`
 
 ---
+
+## 🚄 Deploy to Railway
+
+Railway expects a single web process. This app supports that by serving the built
+frontend from Express in production.
+
+### Build Command
+```bash
+npm run build
+```
+
+### Start Command
+```bash
+npm run start
+```
+
+### Required Environment Variables
+- `DATABASE_URL` (Railway Postgres connection string)
+- `JWT_SECRET` (any long random string)
+- `ENCRYPTION_KEY` (64-character hex string)
+
+### Optional Environment Variables
+- `NODE_ENV=production` (recommended)
+- `VITE_API_URL` (only needed if you host API separately; otherwise leave unset)
+
+### Database Setup on Railway
+Run the SQL in `supabase/migrations/local_setup.sql` against your Railway Postgres
+database to create tables and indexes. You can do this with a one-off `psql` command
+from your machine using the `DATABASE_URL` value.
 
 ## 🌱 Seeding the Database
 

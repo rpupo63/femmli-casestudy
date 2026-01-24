@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:server": "tsx watch server/index.ts",
     "dev:all": "concurrently \"npm run dev:server\" \"npm run dev\"",
-    "build": "vite build",
+    "build": "vite build && npm run build:server",
     "build:server": "tsc -p tsconfig.server.json",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -17,7 +17,8 @@
     "db:setup": "./scripts/setup-local-db.sh",
     "db:seed": "tsx server/seed.ts",
     "db:reset": "docker-compose down -v && docker-compose up -d postgres && sleep 3 && npm run db:setup",
-    "start": "npm run db:start && sleep 2 && PGPASSWORD=postgres npm run db:setup && npm run dev:all"
+    "start": "node server-dist/index.js",
+    "start:local": "npm run db:start && sleep 2 && PGPASSWORD=postgres npm run db:setup && npm run dev:all"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

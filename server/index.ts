@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -569,6 +570,15 @@ app.delete('/api/integrations/oura/disconnect', authenticateToken, async (req, r
         res.status(500).json({ error: error.message || 'Internal server error' });
     }
 });
+
+if (process.env.NODE_ENV === 'production') {
+    const clientDist = path.resolve(process.cwd(), 'dist');
+    app.use(express.static(clientDist));
+
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(clientDist, 'index.html'));
+    });
+}
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);

@@ -23,8 +23,8 @@ This repository is a **technical case study** demonstrating a code review and re
 ## Quick Start
 
 ```bash
-npm install    # First time only
-npm start      # Starts database, backend, and frontend
+npm install           # First time only
+npm run start:local   # Starts database, backend, and frontend
 ```
 
 Then open [http://localhost:5173](http://localhost:5173) and log in with:
@@ -70,7 +70,7 @@ See [Feedback.md](./Feedback.md) for the full list of issues identified and addr
 
 | Command | Description |
 |---------|-------------|
-| `npm start` | Start everything (recommended) |
+| `npm run start:local` | Start everything (recommended) |
 | `npm run dev:all` | Start backend + frontend (if DB already running) |
 | `npm run db:seed` | Add 30 days of sample data |
 | `npm run db:reset` | Reset database completely |
