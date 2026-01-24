@@ -92,7 +92,7 @@ export async function fetchOuraSleepData(
     throw new Error(`Oura API error (daily): ${dailyResponse.status} - ${error}`);
   }
 
-  const dailyData = await dailyResponse.json();
+  const dailyData = (await dailyResponse.json()) as { data?: OuraSleepData[] };
 
   // Fetch sleep sessions for detailed data
   const sessionsResponse = await fetch(
@@ -105,7 +105,7 @@ export async function fetchOuraSleepData(
     throw new Error(`Oura API error (sessions): ${sessionsResponse.status} - ${error}`);
   }
 
-  const sessionsData = await sessionsResponse.json();
+  const sessionsData = (await sessionsResponse.json()) as { data?: OuraSleepSessions[] };
 
   return {
     daily: dailyData.data || [],
@@ -142,17 +142,17 @@ export function convertOuraToSleepLog(
 
   if (primarySession) {
     // Convert from seconds to minutes
-    totalSleep = primarySession.total_sleep_duration 
-      ? Math.round(primarySession.total_sleep_duration / 60) 
+    totalSleep = primarySession.total_sleep_duration
+      ? Math.round(primarySession.total_sleep_duration / 60)
       : null;
-    deepSleep = primarySession.deep_sleep_duration 
-      ? Math.round(primarySession.deep_sleep_duration / 60) 
+    deepSleep = primarySession.deep_sleep_duration
+      ? Math.round(primarySession.deep_sleep_duration / 60)
       : null;
-    remSleep = primarySession.rem_sleep_duration 
-      ? Math.round(primarySession.rem_sleep_duration / 60) 
+    remSleep = primarySession.rem_sleep_duration
+      ? Math.round(primarySession.rem_sleep_duration / 60)
       : null;
-    lightSleep = primarySession.light_sleep_duration 
-      ? Math.round(primarySession.light_sleep_duration / 60) 
+    lightSleep = primarySession.light_sleep_duration
+      ? Math.round(primarySession.light_sleep_duration / 60)
       : null;
 
     // If we don't have individual sleep stages, calculate from total
@@ -165,29 +165,29 @@ export function convertOuraToSleepLog(
   } else if (daily.contributors?.total_sleep) {
     // Fallback to daily data (in minutes already)
     totalSleep = Math.round(daily.contributors.total_sleep);
-    deepSleep = daily.contributors.deep_sleep 
-      ? Math.round(daily.contributors.deep_sleep) 
+    deepSleep = daily.contributors.deep_sleep
+      ? Math.round(daily.contributors.deep_sleep)
       : Math.round(totalSleep * 0.15);
-    remSleep = daily.contributors.rem_sleep 
-      ? Math.round(daily.contributors.rem_sleep) 
+    remSleep = daily.contributors.rem_sleep
+      ? Math.round(daily.contributors.rem_sleep)
       : Math.round(totalSleep * 0.20);
     lightSleep = totalSleep - (deepSleep || 0) - (remSleep || 0);
   }
 
   // Get sleep score (prefer daily score, fallback to session score)
-  const sleepScore = daily.score 
-    || daily.contributors?.total_sleep 
-    || primarySession?.sleep_score_total 
+  const sleepScore = daily.score
+    || daily.contributors?.total_sleep
+    || primarySession?.sleep_score_total
     || null;
 
   // Get efficiency (percentage)
-  const efficiency = daily.contributors?.efficiency 
-    || primarySession?.sleep_efficiency 
+  const efficiency = daily.contributors?.efficiency
+    || primarySession?.sleep_efficiency
     || null;
 
   // Get restfulness score
-  const restfulness = daily.contributors?.restfulness 
-    || primarySession?.sleep_score_disturbances 
+  const restfulness = daily.contributors?.restfulness
+    || primarySession?.sleep_score_disturbances
     || null;
 
   return {
