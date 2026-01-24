@@ -81,10 +81,21 @@ export const caffeineApi = {
         return apiRequest(`/caffeine-logs${params}`);
     },
 
-    saveLog: async (logDate: string, entries: any[], notes?: string) => {
+    saveLog: async (logDate: string, entries: any[], notes?: string | null) => {
+        const normalizedEntries = Array.isArray(entries)
+            ? entries.map((entry) => ({
+                  time: entry?.time ?? '',
+                  type: entry?.type ?? '',
+                  amount: typeof entry?.amount === 'number' ? entry.amount : Number(entry?.amount),
+              }))
+            : [];
         return apiRequest('/caffeine-logs', {
             method: 'POST',
-            body: JSON.stringify({ log_date: logDate, entries, notes }),
+            body: JSON.stringify({
+                log_date: logDate,
+                entries: normalizedEntries,
+                notes: notes ?? null,
+            }),
         });
     },
 };

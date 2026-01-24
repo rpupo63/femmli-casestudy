@@ -1,15 +1,19 @@
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 dotenv.config();
-// Use a fixed key for the case study if env var is missing.
+// Use a fixed key for the case study if env var is missing or invalid.
 // In a real app, this MUST be in the environment variables.
 // Default key for demo purposes only.
-const ENCRYPTION_KEY_HEX = process.env.ENCRYPTION_KEY || 'a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890';
+const DEFAULT_KEY_HEX = 'a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890';
+const isValidHexKey = (value) => !!value && value.length === 64 && /^[0-9a-fA-F]+$/.test(value);
+const ENCRYPTION_KEY_HEX = isValidHexKey(process.env.ENCRYPTION_KEY)
+    ? process.env.ENCRYPTION_KEY
+    : DEFAULT_KEY_HEX;
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12; // Recommended IV length for GCM is 12 bytes (96 bits)
-if (ENCRYPTION_KEY_HEX.length !== 64) {
-    console.error(`[Crypto] Error: ENCRYPTION_KEY must be a 64-character hex string (32 bytes). Current length: ${ENCRYPTION_KEY_HEX.length}`);
-    // Fallback to a valid length key for stability if the env var is just wrong
+if (!isValidHexKey(process.env.ENCRYPTION_KEY)) {
+    const currentLength = process.env.ENCRYPTION_KEY?.length ?? 0;
+    console.error(`[Crypto] Error: ENCRYPTION_KEY must be a 64-character hex string (32 bytes). Current length: ${currentLength}. Using default key for this demo.`);
 }
 const getKey = () => {
     // Ensure we have a valid buffer, truncating or padding if strictly necessary for the demo to not crash,
