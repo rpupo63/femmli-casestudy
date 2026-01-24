@@ -3,9 +3,9 @@ import path from 'path';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import pool from './db';
-import { encrypt, decrypt } from './lib/crypto';
-import { fetchOuraSleepData, convertOuraToSleepLog } from './lib/oura';
+import pool from './db.js';
+import { encrypt, decrypt } from './lib/crypto.js';
+import { fetchOuraSleepData, convertOuraToSleepLog } from './lib/oura.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
