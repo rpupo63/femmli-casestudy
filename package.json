@@ -17,6 +17,7 @@
     "db:stop": "docker-compose down",
     "db:setup": "./scripts/setup-local-db.sh",
     "db:seed": "tsx server/seed.ts",
+    "db:seed:railway": "railway run npx tsx server/seed.ts",
     "db:reset": "docker-compose down -v && docker-compose up -d postgres && sleep 3 && npm run db:setup",
     "start": "npm run build:server && node server-dist/index.js",
     "start:local": "npm run db:start && sleep 2 && PGPASSWORD=postgres npm run db:setup && npm run dev:all"

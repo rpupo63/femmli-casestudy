@@ -8,6 +8,30 @@ interface CaffeineEntry {
   type: string;
 }
 
+// Example users with realistic data
+const EXAMPLE_USERS = [
+  { email: 'test@example.com', password: 'test123', name: 'Test User' },
+  { email: 'sarah.johnson@demo.com', password: 'demo456', name: 'Sarah Johnson' },
+  { email: 'mike.chen@demo.com', password: 'demo789', name: 'Mike Chen' },
+  { email: 'emma.wilson@demo.com', password: 'demo321', name: 'Emma Wilson' },
+  { email: 'alex.garcia@demo.com', password: 'demo654', name: 'Alex Garcia' },
+];
+
+// Realistic caffeine notes
+const CAFFEINE_NOTES = [
+  'Had an extra cup today due to early meeting',
+  'Trying to cut back this week',
+  'Switched to decaf after 2pm',
+  'Feeling tired, needed the extra boost',
+  'Great sleep last night, less caffeine needed',
+  'Stressful day at work',
+  'Weekend relaxation mode',
+  'Pre-workout coffee',
+  'Cold brew instead of regular today',
+  'Treating myself to a fancy latte',
+  null, null, null, null, null, // Some days without notes
+];
+
 // Generate correlated sleep score based on caffeine amount
 function generateCorrelatedSleepScore(caffeineAmount: number): number {
   if (caffeineAmount < 100) {
@@ -142,118 +166,169 @@ function generateMockCaffeineData(days: number = 30, userId: string) {
 
     const entries = generateMockCaffeineEntries(total);
 
+    // Add a random note sometimes
+    const note = CAFFEINE_NOTES[Math.floor(Math.random() * CAFFEINE_NOTES.length)];
+
     mockLogs.push({
       user_id: userId,
       log_date: dateString,
       entries: entries,
-      notes: null
+      notes: note
     });
   }
 
   return mockLogs;
 }
 
+// Generate fake Oura tokens (these are example tokens, not real)
+function generateFakeOuraTokens() {
+  const fakeAccessToken = `oura_at_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  const fakeRefreshToken = `oura_rt_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+  return { accessToken: fakeAccessToken, refreshToken: fakeRefreshToken, expiresAt };
+}
+
+async function seedUserData(userId: string, userEmail: string, hasOuraIntegration: boolean) {
+  // Clear existing data for this user
+  await pool.query('DELETE FROM sleep_logs WHERE user_id = $1', [userId]);
+  await pool.query('DELETE FROM caffeine_logs WHERE user_id = $1', [userId]);
+  await pool.query('DELETE FROM oura_tokens WHERE user_id = $1', [userId]);
+
+  // Generate caffeine data first (so we can correlate sleep scores)
+  const caffeineData = generateMockCaffeineData(30, userId);
+
+  // Create a map of caffeine totals by date for sleep correlation
+  const caffeineMap = new Map<string, number>();
+  for (const log of caffeineData) {
+    const total = log.entries.reduce((sum: number, entry: CaffeineEntry) => sum + entry.amount, 0);
+    caffeineMap.set(log.log_date, total);
+
+    await pool.query(
+      `INSERT INTO caffeine_logs (user_id, log_date, entries, notes)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, log_date)
+       DO UPDATE SET
+         entries = EXCLUDED.entries,
+         notes = EXCLUDED.notes,
+         updated_at = now()`,
+      [
+        log.user_id,
+        log.log_date,
+        encrypt(JSON.stringify(log.entries)),
+        encrypt(log.notes)
+      ]
+    );
+  }
+
+  // Generate and insert sleep data (correlated with caffeine)
+  const sleepData = generateMockSleepData(30, userId, caffeineMap);
+
+  for (const log of sleepData) {
+    await pool.query(
+      `INSERT INTO sleep_logs (
+        user_id, log_date, sleep_score, total_sleep, deep_sleep,
+        rem_sleep, light_sleep, sleep_efficiency, restfulness, source
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      ON CONFLICT (user_id, log_date)
+      DO UPDATE SET
+        sleep_score = EXCLUDED.sleep_score,
+        total_sleep = EXCLUDED.total_sleep,
+        deep_sleep = EXCLUDED.deep_sleep,
+        rem_sleep = EXCLUDED.rem_sleep,
+        light_sleep = EXCLUDED.light_sleep,
+        sleep_efficiency = EXCLUDED.sleep_efficiency,
+        restfulness = EXCLUDED.restfulness,
+        source = EXCLUDED.source,
+        updated_at = now()`,
+      [
+        log.user_id,
+        log.log_date,
+        encrypt(log.sleep_score.toString()),
+        encrypt(log.total_sleep.toString()),
+        encrypt(log.deep_sleep.toString()),
+        encrypt(log.rem_sleep.toString()),
+        encrypt(log.light_sleep.toString()),
+        encrypt(log.sleep_efficiency.toString()),
+        encrypt(log.restfulness.toString()),
+        hasOuraIntegration ? 'oura' : 'manual'
+      ]
+    );
+  }
+
+  // Add Oura tokens for users with integration (encrypted)
+  if (hasOuraIntegration) {
+    const tokens = generateFakeOuraTokens();
+    await pool.query(
+      `INSERT INTO oura_tokens (user_id, access_token, refresh_token, expires_at)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id)
+       DO UPDATE SET
+         access_token = EXCLUDED.access_token,
+         refresh_token = EXCLUDED.refresh_token,
+         expires_at = EXCLUDED.expires_at,
+         updated_at = now()`,
+      [
+        userId,
+        encrypt(tokens.accessToken),
+        encrypt(tokens.refreshToken),
+        tokens.expiresAt
+      ]
+    );
+  }
+
+  return { caffeineCount: caffeineData.length, sleepCount: sleepData.length };
+}
+
 async function seed() {
   try {
-    console.log('🌱 Starting database seed...');
+    console.log('🌱 Starting database seed...\n');
 
-    // Create or get test user
-    const testEmail = 'test@example.com';
-    const testPassword = 'test123';
+    const userIds: { email: string; password: string; id: string }[] = [];
 
-    // Check if user exists
-    const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [testEmail]);
+    // Create all example users (always update password hash to ensure login works)
+    for (const user of EXAMPLE_USERS) {
+      const passwordHash = await bcrypt.hash(user.password, 10);
+      const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [user.email]);
 
-    let userId: string;
+      let userId: string;
 
-    if (existingUser.rows.length > 0) {
-      userId = existingUser.rows[0].id;
-      console.log(`✅ Using existing user: ${testEmail} (${userId})`);
-    } else {
-      // Create new user
-      const passwordHash = await bcrypt.hash(testPassword, 10);
-      const result = await pool.query(
-        'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id',
-        [testEmail, passwordHash]
-      );
-      userId = result.rows[0].id;
-      console.log(`✅ Created test user: ${testEmail} (${userId})`);
+      if (existingUser.rows.length > 0) {
+        userId = existingUser.rows[0].id;
+        // Update password hash to ensure it matches expected credentials
+        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, userId]);
+        console.log(`✅ Updated existing user: ${user.email}`);
+      } else {
+        const result = await pool.query(
+          'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id',
+          [user.email, passwordHash]
+        );
+        userId = result.rows[0].id;
+        console.log(`✅ Created user: ${user.email}`);
+      }
+
+      userIds.push({ email: user.email, password: user.password, id: userId });
     }
 
-    // Clear existing data for this user
-    await pool.query('DELETE FROM sleep_logs WHERE user_id = $1', [userId]);
-    await pool.query('DELETE FROM caffeine_logs WHERE user_id = $1', [userId]);
-    console.log('🧹 Cleared existing mock data');
+    console.log('\n🧹 Clearing existing mock data and seeding fresh data...\n');
 
-    // Generate caffeine data first (so we can correlate sleep scores)
-    const caffeineData = generateMockCaffeineData(30, userId);
-    console.log(`☕ Generating ${caffeineData.length} caffeine log entries...`);
+    // Seed data for each user
+    for (let i = 0; i < userIds.length; i++) {
+      const user = userIds[i];
+      // Give Oura integration to first 3 users
+      const hasOura = i < 3;
 
-    // Create a map of caffeine totals by date for sleep correlation
-    const caffeineMap = new Map<string, number>();
-    for (const log of caffeineData) {
-      const total = log.entries.reduce((sum: number, entry: CaffeineEntry) => sum + entry.amount, 0);
-      caffeineMap.set(log.log_date, total);
-
-      await pool.query(
-        `INSERT INTO caffeine_logs (user_id, log_date, entries, notes)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (user_id, log_date)
-         DO UPDATE SET 
-           entries = EXCLUDED.entries,
-           notes = EXCLUDED.notes,
-           updated_at = now()`,
-        [
-          log.user_id, 
-          log.log_date, 
-          encrypt(JSON.stringify(log.entries)), 
-          encrypt(log.notes)
-        ]
-      );
+      const stats = await seedUserData(user.id, user.email, hasOura);
+      console.log(`  📊 ${user.email}: ${stats.caffeineCount} caffeine logs, ${stats.sleepCount} sleep logs${hasOura ? ', Oura connected' : ''}`);
     }
-    console.log('✅ Inserted caffeine logs');
-
-    // Generate and insert sleep data (correlated with caffeine)
-    const sleepData = generateMockSleepData(30, userId, caffeineMap);
-    console.log(`📊 Generating ${sleepData.length} sleep log entries (correlated with caffeine)...`);
-
-    for (const log of sleepData) {
-      await pool.query(
-        `INSERT INTO sleep_logs (
-          user_id, log_date, sleep_score, total_sleep, deep_sleep, 
-          rem_sleep, light_sleep, sleep_efficiency, restfulness, source
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        ON CONFLICT (user_id, log_date) 
-        DO UPDATE SET 
-          sleep_score = EXCLUDED.sleep_score,
-          total_sleep = EXCLUDED.total_sleep,
-          deep_sleep = EXCLUDED.deep_sleep,
-          rem_sleep = EXCLUDED.rem_sleep,
-          light_sleep = EXCLUDED.light_sleep,
-          sleep_efficiency = EXCLUDED.sleep_efficiency,
-          restfulness = EXCLUDED.restfulness,
-          source = EXCLUDED.source,
-          updated_at = now()`,
-        [
-          log.user_id,
-          log.log_date,
-          encrypt(log.sleep_score),
-          encrypt(log.total_sleep),
-          encrypt(log.deep_sleep),
-          encrypt(log.rem_sleep),
-          encrypt(log.light_sleep),
-          encrypt(log.sleep_efficiency),
-          encrypt(log.restfulness),
-          log.source
-        ]
-      );
-    }
-    console.log('✅ Inserted sleep logs');
 
     console.log('\n🎉 Database seed completed successfully!');
-    console.log(`\nTest user credentials:`);
-    console.log(`  Email: ${testEmail}`);
-    console.log(`  Password: ${testPassword}`);
+    console.log('\n📋 Example user credentials:');
+    console.log('─'.repeat(50));
+    for (const user of userIds) {
+      console.log(`  Email: ${user.email}`);
+      console.log(`  Password: ${EXAMPLE_USERS.find(u => u.email === user.email)?.password}`);
+      console.log('');
+    }
 
     await pool.end();
     process.exit(0);
