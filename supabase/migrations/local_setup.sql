@@ -34,11 +34,12 @@ BEGIN
 END $$;
 
 -- Create caffeine_logs table
+-- Note: entries and notes are stored as encrypted text (iv:tag:ciphertext format)
 CREATE TABLE IF NOT EXISTS caffeine_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES users(id) ON DELETE CASCADE,
   log_date date NOT NULL,
-  entries jsonb DEFAULT '[]'::jsonb,
+  entries text DEFAULT '[]',
   notes text,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),
@@ -46,17 +47,18 @@ CREATE TABLE IF NOT EXISTS caffeine_logs (
 );
 
 -- Create sleep_logs table
+-- Note: numeric fields are stored as encrypted text (iv:tag:ciphertext format)
 CREATE TABLE IF NOT EXISTS sleep_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES users(id) ON DELETE CASCADE,
   log_date date NOT NULL,
-  sleep_score integer,
-  total_sleep integer,
-  deep_sleep integer,
-  rem_sleep integer,
-  light_sleep integer,
-  sleep_efficiency integer,
-  restfulness integer,
+  sleep_score text,
+  total_sleep text,
+  deep_sleep text,
+  rem_sleep text,
+  light_sleep text,
+  sleep_efficiency text,
+  restfulness text,
   source text DEFAULT 'manual',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),

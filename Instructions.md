@@ -29,9 +29,13 @@ Complete these steps once to get the app ready to run.
   npm install
   ```
 
-#### 4. Add Oura environment variables
-- Create a `.env` file in the project root using the values from `.env.example` so the integration works.
-- See `how-to-connect-with-oura.md` for the required variables and how to obtain them.
+#### 4. (Optional) Add environment variables
+- The app works out-of-the-box for local dev using default DB credentials and a demo encryption key.
+- Create a `.env` file in the project root only if you want to override defaults:
+  - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+  - `JWT_SECRET`
+  - `ENCRYPTION_KEY` (64-character hex string)
+- Oura live data uses a personal access token entered in the UI, so no Oura env vars are required for local use.
 
 ## ⚡ Quick Start (After Initialization)
 
@@ -42,15 +46,19 @@ Complete these steps once to get the app ready to run.
    This command will:
    - ✅ Start the database (PostgreSQL)
    - ✅ Set up the database tables
-   - ✅ Add sample data (30 days of caffeine and sleep logs)
    - ✅ Start the backend server (on port 3001)
    - ✅ Start the frontend website (on port 5173)
+2. **(Optional) Add sample data**:
+   ```bash
+   npm run db:seed
+   ```
+   This adds 30 days of sample caffeine and sleep logs plus the test user.
 3. **Wait for startup messages** like "VITE ready" and "Server running on port 3001".
 4. **Open the app**:
    ```
    http://localhost:5173
    ```
-5. **Log in**:
+5. **Log in** (only if you seeded data):
    - **Email:** `test@example.com`
    - **Password:** `test123`
 
