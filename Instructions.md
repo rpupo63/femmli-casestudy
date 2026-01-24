@@ -71,6 +71,20 @@ You should now see the app! 🎉
 - **Test account:** Use `test@example.com` / `test123` after running `npm run db:seed`.
 - **Create your own:** Sign up in the app. New accounts start empty.
 
+### Additional Test Users
+
+The seed script creates multiple users with different data patterns. The first three have Oura integration enabled:
+
+| Email | Password | Oura Connected |
+|-------|----------|----------------|
+| `test@example.com` | `test123` | ✅ Yes |
+| `sarah.johnson@demo.com` | `demo456` | ✅ Yes |
+| `mike.chen@demo.com` | `demo789` | ✅ Yes |
+| `emma.wilson@demo.com` | `demo321` | ❌ No |
+| `alex.garcia@demo.com` | `demo654` | ❌ No |
+
+Each user has 30 days of unique caffeine and sleep data with realistic correlations.
+
 ---
 
 ## 📱 Navigation
